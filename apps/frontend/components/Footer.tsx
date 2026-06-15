@@ -144,14 +144,13 @@ export default function Footer() {
           </p>
           {process.env.NEXT_PUBLIC_BUILD_RUN_NUMBER && (
             <a
-              href={process.env.NEXT_PUBLIC_BUILD_URL ?? '#'}
+              href={'#'}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-gray-700 hover:text-gray-500 transition-colors font-mono"
               title={`SHA: ${process.env.NEXT_PUBLIC_GIT_SHA}`}
             >
-              #{process.env.NEXT_PUBLIC_BUILD_RUN_NUMBER}&nbsp;·&nbsp;
-              {process.env.NEXT_PUBLIC_GIT_SHA?.slice(0, 7)}
+              v#{process.env.NEXT_PUBLIC_BUILD_RUN_NUMBER}
             </a>
           )}
         </div>
