@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "snap-sport-designer", "runs": [{"id": "eval-0-hero-with_skill", "prompt": "Crea el componente Hero para SnapSport. Debe tener el H1 optimizado para SEO, dos CTAs (principal y secundario), y el texto de confianza debajo de los botones.", "eval_id": 0, "outputs": [{"name": "Hero.tsx", "type": "text", "content": "import React from 'react';\nimport Link from 'next/link';\n\ninterface HeroProps {\n  backgroundImageUrl?: string;\n}\n\nexport default function Hero({ backgroundImageUrl }: HeroProps) {\n  return (\n    <section\n      className=\"relative min-h-screen flex items-center justify-center bg-blue-900\"\n      aria-label=\"Hero - Fotograf\u00eda Deportiva Profesional en Canc\u00fan\"\n    >\n      {/* Dark overlay for text readability over background image */}\n      {backgroundImageUrl && (\n        <div\n          className=\"absolute inset-0 bg-black/60 z-0\"\n          aria-hidden=\"true\"\n          style={{ backgroundImage: `url(${backgroundImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}\n        />\n      )}\n\n      {/* Gradient overlay for depth on solid bg-blue-900 */}\n      {!backgroundImageUrl && (\n        <div\n          className=\"absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-900 to-gray-900 z-0\"\n          aria-hidden=\"true\"\n        />\n      )}\n\n      {/* Content */}\n      <div className=\"relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 text-center\">\n        {/* Badge */}\n        <div className=\"inline-flex items-center gap-2 bg-orange-500/20 border border-orange-500/40 rounded-full px-4 py-1.5 mb-6\">\n          <span className=\"w-2 h-2 rounded-full bg-orange-500 animate-pulse\" aria-hidden=\"true\" />\n          <span className=\"text-orange-400 text-sm font-semibold tracking-wide uppercase\">\n            Canc\u00fan &amp; Riviera Maya\n          </span>\n        </div>\n\n        {/* H1 \u2014 Primary SEO keyword */}\n        <h1 className=\"text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight mb-6\">\n          Fotograf\u00eda Deportiva{' '}\n          <span className=\"text-orange-500\">Profesional</span>{' '}\n          en Canc\u00fan\n        </h1>\n\n        {/* Sub-headline \u2014 secondary keywords distributed naturally */}\n        <p className=\"text-xl sm:text-2xl text-gray-300 font-normal max-w-3xl mx-auto mb-10 leading-relaxed\">\n          Capturamos cada instante de acci\u00f3n, emoci\u00f3n y victoria en tus eventos deportivos.\n          F\u00fatbol americano, soccer, b\u00e9isbol, b\u00e1squetbol y m\u00e1s \u2014 con calidad profesional\n          que impresiona a atletas, familias y patrocinadores.\n        </p>\n\n        {/* CTAs */}\n        <div className=\"flex flex-col sm:flex-row gap-4 justify-center items-center mb-10\">\n          {/* Primary CTA */}\n          <Link\n            href=\"mailto:contacto@snapsport.com.mx?subject=Solicitud%20de%20Presupuesto\"\n            className=\"inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-bold text-lg px-8 py-4 rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-orange-400/50 w-full sm:w-auto\"\n          >\n            Solicita un Presupuesto\n            <svg\n              xmlns=\"http://www.w3.org/2000/svg\"\n              className=\"w-5 h-5\"\n              viewBox=\"0 0 20 20\"\n              fill=\"currentColor\"\n              aria-hidden=\"true\"\n            >\n              <path\n                fillRule=\"evenodd\"\n                d=\"M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z\"\n                clipRule=\"evenodd\"\n              />\n            </svg>\n          </Link>\n\n          {/* Secondary CTA */}\n          <Link\n            href=\"#galeria\"\n            className=\"inline-flex items-center justify-center gap-2 border-2 border-white/80 hover:border-white text-white hover:bg-white/10 active:bg-white/20 font-bold text-lg px-8 py-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-white/30 w-full sm:w-auto\"\n          >\n            Ver Galer\u00eda\n            <svg\n              xmlns=\"http://www.w3.org/2000/svg\"\n              className=\"w-5 h-5\"\n              viewBox=\"0 0 20 20\"\n              fill=\"currentColor\"\n              aria-hidden=\"true\"\n            >\n              <path\n                fillRule=\"evenodd\"\n                d=\"M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z\"\n                clipRule=\"evenodd\"\n              />\n            </svg>\n          </Link>\n        </div>\n\n        {/* Trust micro-copy */}\n        <div className=\"flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-gray-300 text-sm sm:text-base font-medium\">\n          <span className=\"flex items-center gap-1.5\">\n            <span className=\"text-yellow-400 font-bold\" aria-hidden=\"true\">\u2713</span>\n            Entrega en 48h\n          </span>\n          <span className=\"hidden sm:block text-gray-600\" aria-hidden=\"true\">\u00b7</span>\n          <span className=\"flex items-center gap-1.5\">\n            <span className=\"text-yellow-400 font-bold\" aria-hidden=\"true\">\u2713</span>\n            +200 eventos cubiertos\n          </span>\n          <span className=\"hidden sm:block text-gray-600\" aria-hidden=\"true\">\u00b7</span>\n          <span className=\"flex items-center gap-1.5\">\n            <span className=\"text-yellow-400 font-bold\" aria-hidden=\"true\">\u2713</span>\n            Canc\u00fan y Riviera Maya\n          </span>\n        </div>\n      </div>\n\n      {/* Scroll indicator */}\n      <div className=\"absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1.5 text-gray-400 text-xs\" aria-hidden=\"true\">\n        <span className=\"uppercase tracking-widest\">Descubre m\u00e1s</span>\n        <svg\n          xmlns=\"http://www.w3.org/2000/svg\"\n          className=\"w-5 h-5 animate-bounce\"\n          viewBox=\"0 0 20 20\"\n          fill=\"currentColor\"\n        >\n          <path\n            fillRule=\"evenodd\"\n            d=\"M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z\"\n            clipRule=\"evenodd\"\n          />\n        </svg>\n      </div>\n    </section>\n  );\n}\n"}], "grading": {"eval_id": 0, "config": "with_skill", "expectations": [{"text": "H1 contains primary SEO keyword", "passed": true, "evidence": "Searched for: ['Fotograf\u00eda Deportiva', 'Canc\u00fan']. Found: ['Fotograf\u00eda Deportiva', 'Canc\u00fan']"}, {"text": "Primary and secondary CTAs present", "passed": true, "evidence": "Searched for: ['Solicita', 'Ver Galer\u00eda']. Found: ['Solicita', 'Ver Galer\u00eda']"}, {"text": "Uses TypeScript with interface", "passed": true, "evidence": "Searched for: ['interface']. Found: ['interface']"}, {"text": "Uses brand colors", "passed": true, "evidence": "Searched for: ['orange-500', 'blue-900']. Found: ['orange-500', 'blue-900']"}, {"text": "Responsive classes present", "passed": true, "evidence": "Searched for: ['lg:']. Found: ['lg:']"}]}}, {"id": "eval-0-hero-without_skill", "prompt": "Crea el componente Hero para SnapSport. Debe tener el H1 optimizado para SEO, dos CTAs (principal y secundario), y el texto de confianza debajo de los botones.", "eval_id": 0, "outputs": [{"name": "Hero.tsx", "type": "text", "content": "'use client';\n\nimport React from 'react';\nimport Link from 'next/link';\n\ninterface HeroProps {\n  headline?: string;\n  subheadline?: string;\n  primaryCTAText?: string;\n  primaryCTAHref?: string;\n  secondaryCTAText?: string;\n  secondaryCTAHref?: string;\n  trustText?: string;\n}\n\nexport default function Hero({\n  headline = 'Fotograf\u00eda Deportiva Profesional en Canc\u00fan',\n  subheadline = 'Capturamos la pasi\u00f3n, la velocidad y la emoci\u00f3n de cada momento deportivo. Im\u00e1genes que inspiran, recuerdos que duran para siempre.',\n  primaryCTAText = 'Solicita un Presupuesto',\n  primaryCTAHref = '#contacto',\n  secondaryCTAText = 'Ver Galer\u00eda',\n  secondaryCTAHref = '#galeria',\n  trustText = '\u2713 M\u00e1s de 500 eventos cubiertos  \u00b7  \u2713 Entrega en 48 horas  \u00b7  \u2713 100% satisfacci\u00f3n garantizada',\n}: HeroProps) {\n  return (\n    <section\n      className=\"relative min-h-screen flex items-center justify-center overflow-hidden bg-blue-900\"\n      aria-label=\"Secci\u00f3n principal de SnapSport\"\n    >\n      {/* Animated background elements */}\n      <div className=\"absolute inset-0 z-0 overflow-hidden\" aria-hidden=\"true\">\n        <div className=\"absolute -top-20 -right-20 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl animate-pulse\" />\n        <div className=\"absolute -bottom-20 -left-20 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl animate-pulse delay-1000\" />\n        <div className=\"absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-800/30 rounded-full blur-3xl\" />\n      </div>\n\n      {/* Main content */}\n      <div className=\"relative z-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32\">\n        <div className=\"grid grid-cols-1 lg:grid-cols-2 gap-12 items-center\">\n          {/* Text content */}\n          <div className=\"text-center lg:text-left\">\n            {/* Badge */}\n            <div className=\"inline-flex items-center gap-2 bg-orange-500/20 border border-orange-500/40 rounded-full px-4 py-2 mb-6\">\n              <span className=\"w-2 h-2 bg-orange-500 rounded-full animate-pulse\" aria-hidden=\"true\" />\n              <span className=\"text-orange-400 text-sm font-medium tracking-wide uppercase\">\n                Fotograf\u00eda Deportiva \u00b7 Canc\u00fan\n              </span>\n            </div>\n\n            {/* H1 - SEO optimized */}\n            <h1 className=\"text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-6\">\n              Fotograf\u00eda{' '}\n              <span className=\"text-orange-500\">Deportiva</span>{' '}\n              Profesional en{' '}\n              <span className=\"text-orange-500\">Canc\u00fan</span>\n            </h1>\n\n            {/* Subheadline */}\n            <p className=\"text-lg sm:text-xl text-blue-100 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed\">\n              {subheadline}\n            </p>\n\n            {/* CTA Buttons */}\n            <div className=\"flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8\">\n              {/* Primary CTA */}\n              <Link\n                href={primaryCTAHref}\n                className=\"inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-orange-500/50\"\n                aria-label={primaryCTAText}\n              >\n                <svg\n                  xmlns=\"http://www.w3.org/2000/svg\"\n                  className=\"w-5 h-5\"\n                  viewBox=\"0 0 24 24\"\n                  fill=\"none\"\n                  stroke=\"currentColor\"\n                  strokeWidth={2.5}\n                  strokeLinecap=\"round\"\n                  strokeLinejoin=\"round\"\n                  aria-hidden=\"true\"\n                >\n                  <path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 15.92v1z\" />\n                </svg>\n                {primaryCTAText}\n              </Link>\n\n              {/* Secondary CTA */}\n              <Link\n                href={secondaryCTAHref}\n                className=\"inline-flex items-center justify-center gap-2 bg-transparent border-2 border-white/40 hover:border-orange-500 text-white hover:text-orange-400 font-bold text-lg px-8 py-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-white/20\"\n                aria-label={secondaryCTAText}\n              >\n                <svg\n                  xmlns=\"http://www.w3.org/2000/svg\"\n                  className=\"w-5 h-5\"\n                  viewBox=\"0 0 24 24\"\n                  fill=\"none\"\n                  stroke=\"currentColor\"\n                  strokeWidth={2.5}\n                  strokeLinecap=\"round\"\n                  strokeLinejoin=\"round\"\n                  aria-hidden=\"true\"\n                >\n                  <rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" ry=\"2\" />\n                  <circle cx=\"8.5\" cy=\"8.5\" r=\"1.5\" />\n                  <polyline points=\"21 15 16 10 5 21\" />\n                </svg>\n                {secondaryCTAText}\n              </Link>\n            </div>\n\n            {/* Trust indicators */}\n            <p className=\"text-blue-300/80 text-sm font-medium tracking-wide\">\n              {trustText}\n            </p>\n          </div>\n\n          {/* Visual side \u2014 stats cards */}\n          <div className=\"hidden lg:flex flex-col gap-6 items-center justify-center\" aria-hidden=\"true\">\n            <div className=\"grid grid-cols-2 gap-4 w-full max-w-sm\">\n              <div className=\"bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 text-center hover:bg-white/15 transition-colors duration-200\">\n                <div className=\"text-4xl font-extrabold text-orange-500 mb-1\">500+</div>\n                <div className=\"text-blue-200 text-sm font-medium\">Eventos cubiertos</div>\n              </div>\n              <div className=\"bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 text-center hover:bg-white/15 transition-colors duration-200\">\n                <div className=\"text-4xl font-extrabold text-orange-500 mb-1\">10k+</div>\n                <div className=\"text-blue-200 text-sm font-medium\">Fotos entregadas</div>\n              </div>\n              <div className=\"bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 text-center hover:bg-white/15 transition-colors duration-200\">\n                <div className=\"text-4xl font-extrabold text-orange-500 mb-1\">48h</div>\n                <div className=\"text-blue-200 text-sm font-medium\">Entrega garantizada</div>\n              </div>\n              <div className=\"bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 text-center hover:bg-white/15 transition-colors duration-200\">\n                <div className=\"text-4xl font-extrabold text-orange-500 mb-1\">5\u2605</div>\n                <div className=\"text-blue-200 text-sm font-medium\">Calificaci\u00f3n promedio</div>\n              </div>\n            </div>\n\n            {/* Sports icons row */}\n            <div className=\"flex gap-4 items-center\">\n              {['\u26bd', '\ud83c\udfca', '\ud83c\udfc3', '\ud83d\udeb4', '\ud83c\udfcb\ufe0f'].map((sport, index) => (\n                <div\n                  key={index}\n                  className=\"w-12 h-12 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center text-xl hover:bg-orange-500/20 hover:border-orange-500/40 transition-colors duration-200\"\n                >\n                  {sport}\n                </div>\n              ))}\n            </div>\n          </div>\n        </div>\n\n        {/* Bottom scroll indicator */}\n        <div className=\"absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-blue-300/60\">\n          <span className=\"text-xs font-medium tracking-widest uppercase\">Explorar</span>\n          <div className=\"w-6 h-10 border-2 border-blue-300/30 rounded-full flex items-start justify-center p-1\">\n            <div className=\"w-1 h-2 bg-orange-500 rounded-full animate-bounce\" />\n          </div>\n        </div>\n      </div>\n    </section>\n  );\n}\n"}], "grading": {"eval_id": 0, "config": "without_skill", "expectations": [{"text": "H1 contains primary SEO keyword", "passed": true, "evidence": "Searched for: ['Fotograf\u00eda Deportiva', 'Canc\u00fan']. Found: ['Fotograf\u00eda Deportiva', 'Canc\u00fan']"}, {"text": "Primary and secondary CTAs present", "passed": true, "evidence": "Searched for: ['Solicita', 'Ver Galer\u00eda']. Found: ['Solicita', 'Ver Galer\u00eda']"}, {"text": "Uses TypeScript with interface", "passed": true, "evidence": "Searched for: ['interface']. Found: ['interface']"}, {"text": "Uses brand colors", "passed": true, "evidence": "Searched for: ['orange-500', 'blue-900']. Found: ['orange-500', 'blue-900']"}, {"text": "Responsive classes present", "passed": true, "evidence": "Searched for: ['lg:']. Found: ['lg:']"}]}}, {"id": "eval-1-pricing-with_skill", "prompt": "Crea la secci\u00f3n de Precios (Pricing) con 3 paquetes: Starter, Pro y Elite. Pro destacado. Precios: 'Consultar precio'.", "eval_id": 1, "outputs": [{"name": "Pricing.tsx", "type": "text", "content": "import React from 'react';\nimport Link from 'next/link';\n\ninterface PricingFeature {\n  text: string;\n}\n\ninterface PricingTier {\n  name: string;\n  subtitle: string;\n  price: string;\n  features: PricingFeature[];\n  ctaText: string;\n  ctaHref: string;\n  highlighted: boolean;\n  badge?: string;\n}\n\nconst tiers: PricingTier[] = [\n  {\n    name: 'Starter',\n    subtitle: 'Torneos locales, eventos escolares',\n    price: 'Consultar precio',\n    highlighted: false,\n    features: [\n      { text: 'Hasta 2h de cobertura' },\n      { text: '50 fotos editadas' },\n      { text: 'Entrega digital' },\n      { text: '1 deporte cubierto' },\n      { text: 'Galer\u00eda privada online' },\n    ],\n    ctaText: 'Solicita un Presupuesto',\n    ctaHref: 'mailto:contacto@snapsport.com.mx',\n  },\n  {\n    name: 'Pro',\n    subtitle: 'Ligas semi-profesionales, m\u00faltiples disciplinas',\n    price: 'Consultar precio',\n    highlighted: true,\n    badge: 'M\u00e1s Popular',\n    features: [\n      { text: 'Hasta 6h de cobertura' },\n      { text: '200 fotos editadas' },\n      { text: 'Entrega en 48h' },\n      { text: 'Hasta 3 deportes cubiertos' },\n      { text: 'Galer\u00eda online compartible' },\n      { text: 'Paquete para redes sociales' },\n    ],\n    ctaText: 'Solicita un Presupuesto',\n    ctaHref: 'mailto:contacto@snapsport.com.mx',\n  },\n  {\n    name: 'Elite',\n    subtitle: 'Cobertura total, entrega premium, redes sociales',\n    price: 'Consultar precio',\n    highlighted: false,\n    features: [\n      { text: 'Cobertura completa del evento' },\n      { text: '+500 fotos editadas' },\n      { text: 'Entrega prioritaria en 24h' },\n      { text: 'Todos los deportes cubiertos' },\n      { text: 'Galer\u00eda premium con tu marca' },\n      { text: 'Video highlight del evento' },\n      { text: 'Derechos de uso ampliado' },\n    ],\n    ctaText: 'Solicita un Presupuesto',\n    ctaHref: 'mailto:contacto@snapsport.com.mx',\n  },\n];\n\nexport default function Pricing() {\n  return (\n    <section\n      id=\"paquetes\"\n      className=\"py-20 lg:py-28 bg-blue-900\"\n      aria-labelledby=\"pricing-heading\"\n    >\n      <div className=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\">\n        {/* Section header */}\n        <div className=\"text-center mb-14\">\n          <p className=\"text-orange-500 font-semibold uppercase tracking-widest text-sm mb-3\">\n            Paquetes de fotograf\u00eda deportiva\n          </p>\n          <h2\n            id=\"pricing-heading\"\n            className=\"text-3xl sm:text-4xl font-black tracking-tight text-white mb-4\"\n          >\n            Elige tu Paquete de Fotograf\u00eda Deportiva\n          </h2>\n          <p className=\"text-gray-300 text-lg max-w-2xl mx-auto\">\n            Sin compromisos ocultos. Presupuesto transparente para tu evento en Canc\u00fan.\n          </p>\n        </div>\n\n        {/* Pricing cards */}\n        <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8 items-center\">\n          {tiers.map((tier) => (\n            <article\n              key={tier.name}\n              className={[\n                'relative flex flex-col rounded-2xl overflow-hidden transition-transform duration-300',\n                tier.highlighted\n                  ? 'bg-orange-500 ring-4 ring-orange-300 scale-105 shadow-2xl z-10'\n                  : 'bg-white/10 backdrop-blur-sm hover:bg-white/15',\n              ].join(' ')}\n            >\n              {/* Popular badge */}\n              {tier.badge && (\n                <div className=\"absolute top-0 inset-x-0 flex justify-center\">\n                  <span className=\"bg-yellow-400 text-gray-900 text-xs font-black uppercase tracking-widest px-4 py-1 rounded-b-lg\">\n                    {tier.badge}\n                  </span>\n                </div>\n              )}\n\n              <div className={['flex flex-col flex-1 p-8', tier.badge ? 'pt-10' : ''].join(' ')}>\n                {/* Tier name & subtitle */}\n                <header className=\"mb-6\">\n                  <h3\n                    className=\"text-2xl font-black tracking-tight mb-1 text-white\"\n                  >\n                    {tier.name}\n                  </h3>\n                  <p\n                    className={[\n                      'text-sm',\n                      tier.highlighted ? 'text-orange-100' : 'text-gray-300',\n                    ].join(' ')}\n                  >\n                    {tier.subtitle}\n                  </p>\n                </header>\n\n                {/* Price */}\n                <div className=\"mb-8\">\n                  <span\n                    className={[\n                      'text-xl font-bold',\n                      tier.highlighted ? 'text-white' : 'text-orange-500',\n                    ].join(' ')}\n                  >\n                    {tier.price}\n                  </span>\n                </div>\n\n                {/* Feature list */}\n                <ul className=\"space-y-3 mb-8 flex-1\" role=\"list\">\n                  {tier.features.map((feature) => (\n                    <li\n                      key={feature.text}\n                      className={[\n                        'flex items-start gap-3 text-sm',\n                        tier.highlighted ? 'text-white' : 'text-gray-200',\n                      ].join(' ')}\n                    >\n                      <span\n                        className={[\n                          'mt-0.5 flex-shrink-0 text-base leading-none',\n                          tier.highlighted ? 'text-yellow-300' : 'text-orange-500',\n                        ].join(' ')}\n                        aria-hidden=\"true\"\n                      >\n                        \u2713\n                      </span>\n                      {feature.text}\n                    </li>\n                  ))}\n                </ul>\n\n                {/* CTA */}\n                <Link\n                  href={tier.ctaHref}\n                  className={[\n                    'block text-center rounded-xl px-6 py-3 font-bold text-sm tracking-wide transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2',\n                    tier.highlighted\n                      ? 'bg-white text-orange-500 hover:bg-gray-100 focus:ring-white focus:ring-offset-orange-500'\n                      : 'bg-orange-500 text-white hover:bg-orange-600 focus:ring-orange-500 focus:ring-offset-blue-900',\n                  ].join(' ')}\n                  aria-label={`${tier.ctaText} \u2014 paquete ${tier.name}`}\n                >\n                  {tier.ctaText}\n                </Link>\n              </div>\n            </article>\n          ))}\n        </div>\n\n        {/* Trust note */}\n        <p className=\"text-center text-gray-400 text-sm mt-12\">\n          \u26a1 Respuesta en menos de 24 horas \u00b7 Fotograf\u00eda deportiva en Canc\u00fan y Riviera Maya \u00b7{' '}\n          <a\n            href=\"mailto:contacto@snapsport.com.mx\"\n            className=\"text-orange-400 hover:text-orange-300 underline underline-offset-2 transition-colors\"\n          >\n            contacto@snapsport.com.mx\n          </a>\n        </p>\n      </div>\n    </section>\n  );\n}\n"}], "grading": {"eval_id": 1, "config": "with_skill", "expectations": [{"text": "Three package tiers present", "passed": true, "evidence": "Searched for: ['Starter', 'Pro', 'Elite']. Found: ['Starter', 'Pro', 'Elite']"}, {"text": "Pro tier visually highlighted", "passed": true, "evidence": "Searched for: ['scale-105']. Found: ['scale-105']"}, {"text": "SEO-optimized H2", "passed": true, "evidence": "Searched for: ['Fotograf\u00eda Deportiva']. Found: ['Fotograf\u00eda Deportiva']"}, {"text": "TypeScript compliant", "passed": true, "evidence": "Searched for: ['interface']. Found: ['interface']"}]}}, {"id": "eval-1-pricing-without_skill", "prompt": "Crea la secci\u00f3n de Precios (Pricing) con 3 paquetes: Starter, Pro y Elite. Pro destacado. Precios: 'Consultar precio'.", "eval_id": 1, "outputs": [{"name": "Pricing.tsx", "type": "text", "content": "'use client';\n\nimport React from 'react';\n\ninterface PricingFeature {\n  text: string;\n  included: boolean;\n}\n\ninterface PricingPackage {\n  name: string;\n  tagline: string;\n  price: string;\n  highlighted: boolean;\n  features: PricingFeature[];\n  ctaLabel: string;\n}\n\nconst packages: PricingPackage[] = [\n  {\n    name: 'Starter',\n    tagline: 'Ideal para eventos peque\u00f1os y sesiones individuales',\n    price: 'Consultar precio',\n    highlighted: false,\n    ctaLabel: 'Solicitar informaci\u00f3n',\n    features: [\n      { text: '2 horas de cobertura fotogr\u00e1fica', included: true },\n      { text: 'Hasta 50 fotos editadas', included: true },\n      { text: 'Entrega en 5 d\u00edas h\u00e1biles', included: true },\n      { text: 'Galer\u00eda digital privada', included: true },\n      { text: 'Fotograf\u00eda de video / reels', included: false },\n      { text: 'Impresiones en alta resoluci\u00f3n', included: false },\n      { text: 'Fot\u00f3grafo de apoyo', included: false },\n    ],\n  },\n  {\n    name: 'Pro',\n    tagline: 'Perfecto para torneos y eventos deportivos medianos',\n    price: 'Consultar precio',\n    highlighted: true,\n    ctaLabel: 'Solicitar presupuesto',\n    features: [\n      { text: '5 horas de cobertura fotogr\u00e1fica', included: true },\n      { text: 'Hasta 150 fotos editadas', included: true },\n      { text: 'Entrega en 3 d\u00edas h\u00e1biles', included: true },\n      { text: 'Galer\u00eda digital privada', included: true },\n      { text: 'Fotograf\u00eda de video / reels', included: true },\n      { text: 'Impresiones en alta resoluci\u00f3n', included: true },\n      { text: 'Fot\u00f3grafo de apoyo', included: false },\n    ],\n  },\n  {\n    name: 'Elite',\n    tagline: 'Cobertura completa para grandes eventos y competencias',\n    price: 'Consultar precio',\n    highlighted: false,\n    ctaLabel: 'Solicitar informaci\u00f3n',\n    features: [\n      { text: 'Cobertura fotogr\u00e1fica ilimitada', included: true },\n      { text: 'Fotos editadas sin l\u00edmite', included: true },\n      { text: 'Entrega en 24 horas', included: true },\n      { text: 'Galer\u00eda digital privada', included: true },\n      { text: 'Fotograf\u00eda de video / reels', included: true },\n      { text: 'Impresiones en alta resoluci\u00f3n', included: true },\n      { text: 'Fot\u00f3grafo de apoyo', included: true },\n    ],\n  },\n];\n\nfunction CheckIcon({ className }: { className?: string }) {\n  return (\n    <svg\n      xmlns=\"http://www.w3.org/2000/svg\"\n      viewBox=\"0 0 24 24\"\n      fill=\"none\"\n      stroke=\"currentColor\"\n      strokeWidth={2.5}\n      strokeLinecap=\"round\"\n      strokeLinejoin=\"round\"\n      className={className}\n      aria-hidden=\"true\"\n    >\n      <polyline points=\"20 6 9 17 4 12\" />\n    </svg>\n  );\n}\n\nfunction XIcon({ className }: { className?: string }) {\n  return (\n    <svg\n      xmlns=\"http://www.w3.org/2000/svg\"\n      viewBox=\"0 0 24 24\"\n      fill=\"none\"\n      stroke=\"currentColor\"\n      strokeWidth={2.5}\n      strokeLinecap=\"round\"\n      strokeLinejoin=\"round\"\n      className={className}\n      aria-hidden=\"true\"\n    >\n      <line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\" />\n      <line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\" />\n    </svg>\n  );\n}\n\ninterface PricingCardProps {\n  pkg: PricingPackage;\n}\n\nfunction PricingCard({ pkg }: PricingCardProps) {\n  const { name, tagline, price, highlighted, features, ctaLabel } = pkg;\n\n  return (\n    <div\n      className={`relative flex flex-col rounded-2xl overflow-hidden transition-transform duration-300 hover:-translate-y-1 ${\n        highlighted\n          ? 'bg-blue-900 text-white shadow-2xl ring-4 ring-orange-500 scale-105 z-10'\n          : 'bg-white text-gray-800 shadow-lg'\n      }`}\n      aria-label={`Paquete ${name}`}\n    >\n      {highlighted && (\n        <div className=\"absolute top-0 left-0 right-0 bg-orange-500 text-white text-center text-sm font-bold py-1.5 tracking-wide uppercase\">\n          M\u00e1s popular\n        </div>\n      )}\n\n      <div className={`px-8 ${highlighted ? 'pt-12 pb-6' : 'pt-8 pb-6'}`}>\n        <h3\n          className={`text-2xl font-extrabold tracking-tight ${\n            highlighted ? 'text-orange-400' : 'text-blue-900'\n          }`}\n        >\n          {name}\n        </h3>\n        <p\n          className={`mt-2 text-sm leading-relaxed ${\n            highlighted ? 'text-blue-200' : 'text-gray-500'\n          }`}\n        >\n          {tagline}\n        </p>\n\n        <div className=\"mt-6\">\n          <span\n            className={`text-xl font-semibold ${\n              highlighted ? 'text-white' : 'text-gray-700'\n            }`}\n          >\n            {price}\n          </span>\n        </div>\n      </div>\n\n      <div\n        className={`border-t ${\n          highlighted ? 'border-blue-700' : 'border-gray-100'\n        }`}\n      />\n\n      <ul className=\"flex-1 px-8 py-6 space-y-4\">\n        {features.map((feature) => (\n          <li key={feature.text} className=\"flex items-start gap-3\">\n            {feature.included ? (\n              <CheckIcon\n                className={`w-5 h-5 mt-0.5 flex-shrink-0 ${\n                  highlighted ? 'text-orange-400' : 'text-orange-500'\n                }`}\n              />\n            ) : (\n              <XIcon\n                className={`w-5 h-5 mt-0.5 flex-shrink-0 ${\n                  highlighted ? 'text-blue-500' : 'text-gray-300'\n                }`}\n              />\n            )}\n            <span\n              className={`text-sm ${\n                feature.included\n                  ? highlighted\n                    ? 'text-white'\n                    : 'text-gray-700'\n                  : highlighted\n                  ? 'text-blue-500'\n                  : 'text-gray-400'\n              }`}\n            >\n              {feature.text}\n            </span>\n          </li>\n        ))}\n      </ul>\n\n      <div className=\"px-8 pb-8\">\n        <a\n          href=\"mailto:contacto@snapsport.com\"\n          className={`block w-full text-center py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${\n            highlighted\n              ? 'bg-orange-500 text-white hover:bg-orange-400 focus:ring-orange-400 focus:ring-offset-blue-900'\n              : 'bg-blue-900 text-white hover:bg-orange-500 focus:ring-orange-500'\n          }`}\n          aria-label={`${ctaLabel} para el paquete ${name}`}\n        >\n          {ctaLabel}\n        </a>\n      </div>\n    </div>\n  );\n}\n\nexport default function Pricing() {\n  return (\n    <section\n      id=\"precios\"\n      className=\"bg-gray-50 py-20 px-4 sm:px-6 lg:px-8\"\n      aria-labelledby=\"pricing-heading\"\n    >\n      <div className=\"max-w-6xl mx-auto\">\n        {/* Header */}\n        <div className=\"text-center mb-14\">\n          <span className=\"inline-block text-orange-500 font-semibold text-sm uppercase tracking-widest mb-3\">\n            Paquetes y precios\n          </span>\n          <h2\n            id=\"pricing-heading\"\n            className=\"text-4xl sm:text-5xl font-extrabold text-blue-900 leading-tight\"\n          >\n            Elige tu paquete\n          </h2>\n          <p className=\"mt-4 text-gray-500 text-lg max-w-xl mx-auto\">\n            Capturamos cada momento con intensidad y precisi\u00f3n. Selecciona el\n            plan que mejor se adapte a tu evento deportivo.\n          </p>\n        </div>\n\n        {/* Cards grid */}\n        <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch\">\n          {packages.map((pkg) => (\n            <PricingCard key={pkg.name} pkg={pkg} />\n          ))}\n        </div>\n\n        {/* Footer note */}\n        <p className=\"mt-12 text-center text-sm text-gray-400\">\n          \u00bfTienes un evento especial o necesitas algo a medida?{' '}\n          <a\n            href=\"mailto:contacto@snapsport.com\"\n            className=\"text-orange-500 font-semibold hover:underline focus:outline-none focus:underline\"\n          >\n            Cont\u00e1ctanos\n          </a>{' '}\n          y dise\u00f1amos un paquete personalizado para ti.\n        </p>\n      </div>\n    </section>\n  );\n}\n"}], "grading": {"eval_id": 1, "config": "without_skill", "expectations": [{"text": "Three package tiers present", "passed": true, "evidence": "Searched for: ['Starter', 'Pro', 'Elite']. Found: ['Starter', 'Pro', 'Elite']"}, {"text": "Pro tier visually highlighted", "passed": true, "evidence": "Searched for: ['scale-105']. Found: ['scale-105']"}, {"text": "SEO-optimized H2", "passed": false, "evidence": "Searched for: ['Fotograf\u00eda Deportiva']. Found: []"}, {"text": "TypeScript compliant", "passed": true, "evidence": "Searched for: ['interface']. Found: ['interface']"}]}}, {"id": "eval-2-header-with_skill", "prompt": "Crea el Header/Nav para SnapSport. Sticky, logo naranja, 6 nav links, CTA 'Solicita Presupuesto'.", "eval_id": 2, "outputs": [{"name": "Header.tsx", "type": "text", "content": "'use client';\n\nimport React, { useState, useEffect } from 'react';\nimport Link from 'next/link';\n\ninterface NavLink {\n  label: string;\n  href: string;\n}\n\nconst NAV_LINKS: NavLink[] = [\n  { label: 'Inicio', href: '#inicio' },\n  { label: 'Galer\u00eda', href: '#galeria' },\n  { label: 'Deportes', href: '#deportes' },\n  { label: 'Paquetes', href: '#paquetes' },\n  { label: 'Testimonios', href: '#testimonios' },\n  { label: 'Contacto', href: '#contacto' },\n];\n\nexport default function Header() {\n  const [isScrolled, setIsScrolled] = useState(false);\n  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);\n\n  useEffect(() => {\n    const handleScroll = () => {\n      setIsScrolled(window.scrollY > 10);\n    };\n\n    window.addEventListener('scroll', handleScroll, { passive: true });\n    return () => window.removeEventListener('scroll', handleScroll);\n  }, []);\n\n  const closeMobileMenu = () => setIsMobileMenuOpen(false);\n\n  return (\n    <header\n      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${\n        isScrolled\n          ? 'bg-blue-900/95 backdrop-blur-md shadow-lg'\n          : 'bg-blue-900'\n      }`}\n      role=\"banner\"\n    >\n      <div className=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\">\n        <div className=\"flex items-center justify-between h-16 lg:h-20\">\n\n          {/* Logo */}\n          <Link\n            href=\"#inicio\"\n            className=\"flex items-center gap-2 shrink-0\"\n            aria-label=\"SnapSport \u2014 Inicio\"\n          >\n            <span className=\"text-2xl lg:text-3xl font-black tracking-tight text-orange-500\">\n              Snap\n            </span>\n            <span className=\"text-2xl lg:text-3xl font-black tracking-tight text-white\">\n              Sport\n            </span>\n          </Link>\n\n          {/* Desktop Navigation */}\n          <nav\n            className=\"hidden lg:flex items-center gap-8\"\n            aria-label=\"Navegaci\u00f3n principal\"\n          >\n            {NAV_LINKS.map((link) => (\n              <Link\n                key={link.href}\n                href={link.href}\n                className=\"text-sm font-medium text-gray-300 hover:text-orange-500 transition-colors duration-200 relative group\"\n              >\n                {link.label}\n                <span className=\"absolute -bottom-1 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-200 group-hover:w-full\" />\n              </Link>\n            ))}\n          </nav>\n\n          {/* Desktop CTA Button */}\n          <div className=\"hidden lg:flex items-center\">\n            <Link\n              href=\"#contacto\"\n              className=\"inline-flex items-center px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-lg transition-colors duration-200 shadow-md hover:shadow-orange-500/25 hover:shadow-lg\"\n            >\n              Solicita Presupuesto\n            </Link>\n          </div>\n\n          {/* Mobile Menu Toggle */}\n          <button\n            type=\"button\"\n            onClick={() => setIsMobileMenuOpen((prev) => !prev)}\n            className=\"lg:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-300 hover:text-white hover:bg-blue-800 transition-colors duration-200\"\n            aria-expanded={isMobileMenuOpen}\n            aria-controls=\"mobile-menu\"\n            aria-label={isMobileMenuOpen ? 'Cerrar men\u00fa' : 'Abrir men\u00fa'}\n          >\n            {isMobileMenuOpen ? (\n              <svg\n                className=\"h-6 w-6\"\n                fill=\"none\"\n                viewBox=\"0 0 24 24\"\n                strokeWidth={2}\n                stroke=\"currentColor\"\n                aria-hidden=\"true\"\n              >\n                <path strokeLinecap=\"round\" strokeLinejoin=\"round\" d=\"M6 18 18 6M6 6l12 12\" />\n              </svg>\n            ) : (\n              <svg\n                className=\"h-6 w-6\"\n                fill=\"none\"\n                viewBox=\"0 0 24 24\"\n                strokeWidth={2}\n                stroke=\"currentColor\"\n                aria-hidden=\"true\"\n              >\n                <path strokeLinecap=\"round\" strokeLinejoin=\"round\" d=\"M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5\" />\n              </svg>\n            )}\n          </button>\n        </div>\n      </div>\n\n      {/* Mobile Menu */}\n      <div\n        id=\"mobile-menu\"\n        className={`lg:hidden transition-all duration-300 overflow-hidden ${\n          isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'\n        }`}\n        aria-hidden={!isMobileMenuOpen}\n      >\n        <div className=\"bg-blue-900/98 backdrop-blur-md border-t border-blue-800 px-4 pt-4 pb-6\">\n          <nav\n            className=\"flex flex-col gap-1\"\n            aria-label=\"Navegaci\u00f3n m\u00f3vil\"\n          >\n            {NAV_LINKS.map((link) => (\n              <Link\n                key={link.href}\n                href={link.href}\n                onClick={closeMobileMenu}\n                className=\"block px-4 py-3 text-base font-medium text-gray-300 hover:text-orange-500 hover:bg-blue-800 rounded-lg transition-colors duration-200\"\n              >\n                {link.label}\n              </Link>\n            ))}\n          </nav>\n\n          <div className=\"mt-4 pt-4 border-t border-blue-800\">\n            <Link\n              href=\"#contacto\"\n              onClick={closeMobileMenu}\n              className=\"block w-full text-center px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white text-base font-bold rounded-lg transition-colors duration-200 shadow-md\"\n            >\n              Solicita Presupuesto\n            </Link>\n          </div>\n        </div>\n      </div>\n    </header>\n  );\n}\n"}], "grading": {"eval_id": 2, "config": "with_skill", "expectations": [{"text": "Header is sticky", "passed": true, "evidence": "Searched for: ['sticky', 'fixed']. Found: ['fixed']"}, {"text": "All nav links present", "passed": true, "evidence": "Searched for: ['Galer\u00eda', 'Paquetes', 'Contacto']. Found: ['Galer\u00eda', 'Paquetes', 'Contacto']"}, {"text": "Uses next/link", "passed": true, "evidence": "Searched for: ['next/link']. Found: ['next/link']"}, {"text": "Mobile menu support", "passed": true, "evidence": "Searched for: ['useState', 'md:hidden', 'md:flex', 'hamburger', 'mobile']. Found: ['useState', 'mobile']"}, {"text": "CTA button present", "passed": true, "evidence": "Searched for: ['Solicita', 'Presupuesto']. Found: ['Solicita', 'Presupuesto']"}]}}, {"id": "eval-2-header-without_skill", "prompt": "Crea el Header/Nav para SnapSport. Sticky, logo naranja, 6 nav links, CTA 'Solicita Presupuesto'.", "eval_id": 2, "outputs": [{"name": "Header.tsx", "type": "text", "content": "'use client';\n\nimport React, { useState, useEffect } from 'react';\nimport Link from 'next/link';\n\ninterface NavLink {\n  label: string;\n  href: string;\n}\n\nconst navLinks: NavLink[] = [\n  { label: 'Inicio', href: '#inicio' },\n  { label: 'Galer\u00eda', href: '#galeria' },\n  { label: 'Deportes', href: '#deportes' },\n  { label: 'Paquetes', href: '#paquetes' },\n  { label: 'Testimonios', href: '#testimonios' },\n  { label: 'Contacto', href: '#contacto' },\n];\n\nexport default function Header() {\n  const [isScrolled, setIsScrolled] = useState(false);\n  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);\n\n  useEffect(() => {\n    const handleScroll = () => {\n      setIsScrolled(window.scrollY > 10);\n    };\n    window.addEventListener('scroll', handleScroll);\n    return () => window.removeEventListener('scroll', handleScroll);\n  }, []);\n\n  const handleNavClick = () => {\n    setIsMobileMenuOpen(false);\n  };\n\n  return (\n    <header\n      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${\n        isScrolled\n          ? 'bg-blue-900 shadow-lg shadow-blue-900/30'\n          : 'bg-blue-900/95 backdrop-blur-sm'\n      }`}\n      role=\"banner\"\n    >\n      <nav\n        className=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\"\n        aria-label=\"Navegaci\u00f3n principal\"\n      >\n        <div className=\"flex items-center justify-between h-16 lg:h-20\">\n          {/* Logo */}\n          <Link\n            href=\"#inicio\"\n            className=\"flex items-center gap-2 group flex-shrink-0\"\n            aria-label=\"SnapSport - Ir al inicio\"\n          >\n            <div className=\"flex items-center gap-1\">\n              <span\n                className=\"text-2xl lg:text-3xl font-black tracking-tight text-orange-500 group-hover:text-orange-400 transition-colors duration-200\"\n                aria-hidden=\"true\"\n              >\n                Snap\n              </span>\n              <span className=\"text-2xl lg:text-3xl font-black tracking-tight text-white group-hover:text-gray-200 transition-colors duration-200\">\n                Sport\n              </span>\n              <span\n                className=\"text-orange-500 text-2xl lg:text-3xl font-black leading-none group-hover:text-orange-400 transition-colors duration-200\"\n                aria-hidden=\"true\"\n              >\n                \u00ae\n              </span>\n            </div>\n          </Link>\n\n          {/* Desktop Navigation Links */}\n          <ul\n            className=\"hidden lg:flex items-center gap-1 xl:gap-2\"\n            role=\"list\"\n          >\n            {navLinks.map((link) => (\n              <li key={link.href}>\n                <Link\n                  href={link.href}\n                  className=\"relative px-3 py-2 text-sm font-medium text-gray-200 hover:text-orange-500 transition-colors duration-200 rounded-md hover:bg-white/5 group\"\n                >\n                  {link.label}\n                  <span\n                    className=\"absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-orange-500 group-hover:w-4/5 transition-all duration-300 rounded-full\"\n                    aria-hidden=\"true\"\n                  />\n                </Link>\n              </li>\n            ))}\n          </ul>\n\n          {/* Desktop CTA Button */}\n          <div className=\"hidden lg:block flex-shrink-0\">\n            <Link\n              href=\"#contacto\"\n              className=\"inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-md shadow-orange-500/25 hover:shadow-orange-400/40 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-blue-900\"\n              aria-label=\"Solicita un presupuesto para tu sesi\u00f3n fotogr\u00e1fica\"\n            >\n              <svg\n                xmlns=\"http://www.w3.org/2000/svg\"\n                className=\"h-4 w-4\"\n                fill=\"none\"\n                viewBox=\"0 0 24 24\"\n                stroke=\"currentColor\"\n                strokeWidth={2}\n                aria-hidden=\"true\"\n              >\n                <path\n                  strokeLinecap=\"round\"\n                  strokeLinejoin=\"round\"\n                  d=\"M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z\"\n                />\n              </svg>\n              Solicita Presupuesto\n            </Link>\n          </div>\n\n          {/* Mobile Menu Button */}\n          <button\n            type=\"button\"\n            className=\"lg:hidden p-2 rounded-md text-gray-200 hover:text-orange-500 hover:bg-white/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1 focus:ring-offset-blue-900\"\n            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}\n            aria-expanded={isMobileMenuOpen}\n            aria-controls=\"mobile-menu\"\n            aria-label={isMobileMenuOpen ? 'Cerrar men\u00fa' : 'Abrir men\u00fa'}\n          >\n            <span className=\"sr-only\">\n              {isMobileMenuOpen ? 'Cerrar men\u00fa' : 'Abrir men\u00fa'}\n            </span>\n            {isMobileMenuOpen ? (\n              <svg\n                xmlns=\"http://www.w3.org/2000/svg\"\n                className=\"h-6 w-6\"\n                fill=\"none\"\n                viewBox=\"0 0 24 24\"\n                stroke=\"currentColor\"\n                strokeWidth={2}\n                aria-hidden=\"true\"\n              >\n                <path\n                  strokeLinecap=\"round\"\n                  strokeLinejoin=\"round\"\n                  d=\"M6 18L18 6M6 6l12 12\"\n                />\n              </svg>\n            ) : (\n              <svg\n                xmlns=\"http://www.w3.org/2000/svg\"\n                className=\"h-6 w-6\"\n                fill=\"none\"\n                viewBox=\"0 0 24 24\"\n                stroke=\"currentColor\"\n                strokeWidth={2}\n                aria-hidden=\"true\"\n              >\n                <path\n                  strokeLinecap=\"round\"\n                  strokeLinejoin=\"round\"\n                  d=\"M4 6h16M4 12h16M4 18h16\"\n                />\n              </svg>\n            )}\n          </button>\n        </div>\n\n        {/* Mobile Menu */}\n        <div\n          id=\"mobile-menu\"\n          className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${\n            isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'\n          }`}\n          aria-hidden={!isMobileMenuOpen}\n        >\n          <div className=\"border-t border-white/10 py-4 space-y-1\">\n            <ul role=\"list\" className=\"space-y-1\">\n              {navLinks.map((link) => (\n                <li key={link.href}>\n                  <Link\n                    href={link.href}\n                    onClick={handleNavClick}\n                    className=\"flex items-center px-4 py-3 text-base font-medium text-gray-200 hover:text-orange-500 hover:bg-white/5 rounded-lg transition-colors duration-200\"\n                  >\n                    {link.label}\n                  </Link>\n                </li>\n              ))}\n            </ul>\n            <div className=\"pt-4 px-4 pb-2\">\n              <Link\n                href=\"#contacto\"\n                onClick={handleNavClick}\n                className=\"flex items-center justify-center gap-2 w-full px-5 py-3 bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-white font-semibold text-base rounded-lg transition-all duration-200 shadow-md shadow-orange-500/25 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-blue-900\"\n                aria-label=\"Solicita un presupuesto para tu sesi\u00f3n fotogr\u00e1fica\"\n              >\n                <svg\n                  xmlns=\"http://www.w3.org/2000/svg\"\n                  className=\"h-5 w-5\"\n                  fill=\"none\"\n                  viewBox=\"0 0 24 24\"\n                  stroke=\"currentColor\"\n                  strokeWidth={2}\n                  aria-hidden=\"true\"\n                >\n                  <path\n                    strokeLinecap=\"round\"\n                    strokeLinejoin=\"round\"\n                    d=\"M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z\"\n                  />\n                </svg>\n                Solicita Presupuesto\n              </Link>\n            </div>\n          </div>\n        </div>\n      </nav>\n    </header>\n  );\n}\n"}], "grading": {"eval_id": 2, "config": "without_skill", "expectations": [{"text": "Header is sticky", "passed": true, "evidence": "Searched for: ['sticky', 'fixed']. Found: ['fixed']"}, {"text": "All nav links present", "passed": true, "evidence": "Searched for: ['Galer\u00eda', 'Paquetes', 'Contacto']. Found: ['Galer\u00eda', 'Paquetes', 'Contacto']"}, {"text": "Uses next/link", "passed": true, "evidence": "Searched for: ['next/link']. Found: ['next/link']"}, {"text": "Mobile menu support", "passed": true, "evidence": "Searched for: ['useState', 'md:hidden', 'md:flex', 'hamburger', 'mobile']. Found: ['useState', 'mobile']"}, {"text": "CTA button present", "passed": true, "evidence": "Searched for: ['Solicita', 'Presupuesto']. Found: ['Solicita', 'Presupuesto']"}]}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"skill_name": "snap-sport-designer", "iteration": 1, "configs": [{"name": "with_skill", "mean_pass_rate": 1.0, "evals": [{"eval_id": 0, "eval_name": "Hero Component", "config": "with_skill", "pass_rate": 1.0, "passed": 5, "total": 5}, {"eval_id": 1, "eval_name": "Pricing Component", "config": "with_skill", "pass_rate": 1.0, "passed": 4, "total": 4}, {"eval_id": 2, "eval_name": "Header Component", "config": "with_skill", "pass_rate": 1.0, "passed": 5, "total": 5}]}, {"name": "without_skill", "mean_pass_rate": 0.9166666666666666, "evals": [{"eval_id": 0, "eval_name": "Hero Component", "config": "without_skill", "pass_rate": 1.0, "passed": 5, "total": 5}, {"eval_id": 1, "eval_name": "Pricing Component", "config": "without_skill", "pass_rate": 0.75, "passed": 3, "total": 4}, {"eval_id": 2, "eval_name": "Header Component", "config": "without_skill", "pass_rate": 1.0, "passed": 5, "total": 5}]}]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>
