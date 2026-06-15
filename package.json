@@ -12,10 +12,15 @@
     "dev:frontend": "npm run dev --prefix apps/frontend",
     "dev:admin": "npm run dev --prefix apps/admin",
     "dev:api": "npm run dev --prefix apps/api",
-    "build": "turbo build",
+    "build": "npm run build --prefix apps/frontend && npm run build --prefix apps/admin && npm run build --prefix apps/api",
+    "build:infra": "turbo build",
     "lint": "turbo lint",
     "clean": "turbo clean && rm -rf node_modules",
-    "kill-ports": "npx kill-port 3000 3001 4000"
+    "kill-ports": "npx kill-port 3000 3001 4000",
+    "deploy": "node infra/scripts/deploy.mjs",
+    "cdk:synth": "npm run synth --prefix infra",
+    "cdk:diff": "npm run diff --prefix infra",
+    "cdk:bootstrap": "cd infra && npx cdk bootstrap"
   },
   "devDependencies": {
     "concurrently": "^9",

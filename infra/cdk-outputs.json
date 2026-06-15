@@ -1,0 +1,19 @@
+{
+  "SnapSportMedia": {
+    "MediaBucketName": "snapsport-media-958490228555",
+    "ExportsOutputRefMediaBucketBCBB02BA270A7AEB": "snapsport-media-958490228555",
+    "ExportsOutputFnGetAttMediaBucketBCBB02BAArnB94B784B": "arn:aws:s3:::snapsport-media-958490228555"
+  },
+  "SnapSportFrontend": {
+    "AdminUrl": "https://d1e2jkggfd2wiq.cloudfront.net",
+    "FrontendBucketName": "snapsport-frontend-958490228555",
+    "FrontendDistributionId": "E14OLPWKA2CSSA",
+    "AdminDistributionId": "E34YEHTNM4LJBC",
+    "FrontendUrl": "https://d2nm777vlb1ysw.cloudfront.net",
+    "AdminBucketName": "snapsport-admin-958490228555"
+  },
+  "SnapSportApi": {
+    "ApiUrl": "https://g5mgmhuul5.execute-api.us-east-1.amazonaws.com/",
+    "EventsTableName": "snapsport-events"
+  }
+}
