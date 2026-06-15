@@ -142,6 +142,18 @@ export default function Footer() {
           <p className="text-xs text-gray-600 text-center">
             Fotografía deportiva profesional en Cancún y Riviera Maya.
           </p>
+          {process.env.NEXT_PUBLIC_BUILD_RUN_NUMBER && (
+            <a
+              href={process.env.NEXT_PUBLIC_BUILD_URL ?? '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-gray-700 hover:text-gray-500 transition-colors font-mono"
+              title={`SHA: ${process.env.NEXT_PUBLIC_GIT_SHA}`}
+            >
+              #{process.env.NEXT_PUBLIC_BUILD_RUN_NUMBER}&nbsp;·&nbsp;
+              {process.env.NEXT_PUBLIC_GIT_SHA?.slice(0, 7)}
+            </a>
+          )}
         </div>
       </div>
     </footer>
