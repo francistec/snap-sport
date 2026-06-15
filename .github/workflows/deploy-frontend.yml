@@ -1,12 +1,12 @@
 name: Deploy Frontend
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/frontend/**'
-      - 'packages/**'
-      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag o commit a desplegar'
+        required: true
+        default: main
 
 concurrency:
   group: deploy-frontend
@@ -19,6 +19,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
 
       - uses: actions/setup-node@v4
         with:

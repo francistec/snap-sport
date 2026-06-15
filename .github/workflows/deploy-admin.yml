@@ -1,12 +1,12 @@
 name: Deploy Admin
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/admin/**'
-      - 'packages/**'
-      - '.github/workflows/deploy-admin.yml'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag o commit a desplegar'
+        required: true
+        default: main
 
 concurrency:
   group: deploy-admin
@@ -19,6 +19,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
 
       - uses: actions/setup-node@v4
         with:
