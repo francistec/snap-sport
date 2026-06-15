@@ -147,7 +147,7 @@ export default function Footer() {
               className="text-xs text-gray-700 hover:text-gray-500 transition-colors font-mono"
               title={`${process.env.NEXT_PUBLIC_GIT_SHA?.slice(0, 7)}`}
             >
-              v 0.0.{process.env.NEXT_PUBLIC_BUILD_RUN_NUMBER}
+              v#0.0.{process.env.NEXT_PUBLIC_BUILD_RUN_NUMBER}
             </span>
           )}
         </div>
