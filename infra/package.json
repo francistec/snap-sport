@@ -1,0 +1,22 @@
+{
+  "name": "@snapsport/infra",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy --all",
+    "diff": "cdk diff",
+    "destroy": "cdk destroy --all",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2",
+    "constructs": "^10"
+  },
+  "devDependencies": {
+    "@snapsport/config": "*",
+    "aws-cdk": "^2",
+    "typescript": "^5"
+  }
+}

@@ -1,88 +1,96 @@
 # Snap Sport - Configuración de Claude
 
 ## 🎯 Contexto del Proyecto
-- **Framework:** Next.js 14+ con TypeScript
-- **Styling:** Tailwind CSS
+- **Monorepo:** Turborepo + npm workspaces
+- **Framework:** Next.js 16 con TypeScript
+- **Styling:** Tailwind CSS v4
 - **Node:** v18+
-- **Propósito:** Landing page y portfolio para agencia fotográfica de deportes
+- **Deploy:** AWS (S3 + CloudFront + API Gateway + Lambda + DynamoDB)
+- **IaC:** AWS CDK (TypeScript) en `infra/`
 
-## 📐 Estructura del Proyecto
+## 📐 Estructura del Monorepo
 
 ```
-src/
-├── app/
-│   ├── layout.tsx      (Layout global)
-│   ├── page.tsx        (Página principal)
-│   └── globals.css     (Estilos globales)
-├── components/
-│   ├── Header.tsx
-│   ├── Hero.tsx
-│   ├── Gallery.tsx
-│   ├── Services.tsx
-│   ├── CTA.tsx
-│   └── Footer.tsx
-└── public/
-└── images/
+snap-sport/
+├── apps/
+│   ├── frontend/        ← Next.js (output: export → S3)  puerto 3000
+│   ├── admin/           ← Next.js (output: export → S3)  puerto 3001
+│   └── api/             ← Hono + Lambda handlers          puerto 4000
+├── packages/
+│   ├── types/           ← @snapsport/types (interfaces compartidas)
+│   └── config/          ← @snapsport/config (tsconfig/eslint base)
+├── infra/               ← AWS CDK stacks
+│   ├── bin/app.ts
+│   └── lib/
+│       ├── frontend-stack.ts
+│       ├── api-stack.ts
+│       └── media-stack.ts
+├── turbo.json
+└── package.json
+```
+
+## 🔧 Comandos Frecuentes
+
+```bash
+# Desde la raíz del monorepo:
+npm run dev              # levanta todas las apps en paralelo
+npm run build            # build de todo el monorepo
+turbo dev --filter=frontend   # solo frontend
+turbo dev --filter=api        # solo API
+turbo build --filter=frontend # build de una sola app
+
+# Infra:
+cd infra && npm run synth      # CDK synth
+cd infra && npm run deploy     # deploy a AWS
+cd infra && npm run diff       # ver cambios pendientes
 ```
 
 ## 🎨 Estándares de Código
 
 ### TypeScript
-- Usar tipos explícitos
+- Usar tipos explícitos — nunca `any`
 - Interfaces para props de componentes
-- No usar `any`
+- Tipos compartidos van en `packages/types/src/`
 
-### React/Next.js
+### React/Next.js (apps/frontend y apps/admin)
 - Componentes funcionales con hooks
-- Use `'use client'` solo cuando sea necesario
-- Componentes reutilizables en `src/components/`
+- `'use client'` solo cuando sea necesario
+- Componentes en `components/` dentro de cada app
+- `next export` habilitado (`output: 'export'` en next.config.ts)
 
 ### Tailwind CSS
 - Colores principales:
   - Primary: `#FF6B35` → `orange-500`
   - Secondary: `#004E89` → `blue-900`
   - Accent: `#FFD700` → `yellow-400`
-- Usar clases de Tailwind, NO CSS personalizado
 - Mobile-first approach
 
-### Ejemplo de componente:
-```tsx
-'use client';
-
-import React from 'react';
-
-interface Props {
-  title: string;
-  description?: string;
-}
-
-export default function MyComponent({ title, description }: Props) {
-  return (
-    <div className="p-6 bg-gray-100 rounded-lg">
-      <h2 className="text-2xl font-bold text-blue-900">{title}</h2>
-      {description && <p className="text-gray-600 mt-2">{description}</p>}
-    </div>
-  );
-}
-```
-
-## 🔧 Comandos Frecuentes
-- `npm run dev` - Desarrollo
-- `npm run build` - Compilar producción
-- `npm run lint` - Verificar código
+### API (apps/api)
+- Hono como router — `src/app.ts`
+- Handlers por recurso en `src/handlers/`
+- `src/lambda.ts` = entrypoint Lambda (producción)
+- `src/local.ts` = servidor Node local (desarrollo)
 
 ## 📋 Checklist para Nuevas Features
-- [ ] Crear componente en `src/components/`
-- [ ] Usar TypeScript con tipos explícitos
+
+### Frontend / Admin
+- [ ] Componente en `apps/{frontend|admin}/components/`
+- [ ] Tipos necesarios en `packages/types/src/`
 - [ ] Responsive design (mobile-first)
 - [ ] Accesibilidad (semantic HTML, aria labels)
 - [ ] Sin console.log en producción
 
+### API
+- [ ] Handler en `apps/api/src/handlers/`
+- [ ] Ruta registrada en `apps/api/src/app.ts`
+- [ ] Tipos de request/response en `packages/types/`
+- [ ] Permisos IAM actualizados en `infra/lib/api-stack.ts`
+
 ## 🎬 Notas Importantes
-- Las imágenes van en `public/images/`
+- Las imágenes van en S3 (`snapsport-media-{account}`) — acceso por presigned URLs
 - Usar componentes de Next.js: `Image`, `Link`
-- Para animaciones: usar Framer Motion o CSS puro
-- Mantener performance: lazy load donde sea posible
+- Para animaciones: Framer Motion o CSS puro
+- DynamoDB en on-demand (PAY_PER_REQUEST) — sin costos fijos
 
 ## 📞 Información del Proyecto
 - **Email:** contacto@snapsport.com
